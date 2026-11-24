@@ -72,7 +72,7 @@ impl Default for WaveformRenderSettings {
 /// This is a hardcoded constant instead of
 /// json5::from_str(include_str!("../acfs/AndroidWaveform.acf")), to avoid the json5 dependency.
 /// The json5 dependency adds more than 100kb extra to the Twilight Android APK size.
-const ANDROID_ACF: Acf = Acf {
+pub(crate) const ANDROID_ACF: Acf = Acf {
     continuous: ContinuousOscillatorSettings {
         gain: 1.0,
         emphasis_ducking: 0.5,

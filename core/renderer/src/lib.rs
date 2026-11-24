@@ -19,6 +19,8 @@ mod acf;
 #[cfg(feature = "android")]
 mod android_constant_intensity;
 #[cfg(feature = "android")]
+mod android_pwle;
+#[cfg(feature = "android")]
 mod android_waveform;
 mod continuous_oscillator_settings;
 mod emphasis_oscillator_settings;
@@ -37,6 +39,16 @@ pub use crate::acf::Acf;
 pub use crate::android_constant_intensity::ConstantIntensityVibration;
 #[cfg(feature = "android")]
 pub use crate::android_constant_intensity::render_constant_intensity;
+#[cfg(feature = "android")]
+pub use crate::android_pwle::PwleControlPoint;
+#[cfg(feature = "android")]
+pub use crate::android_pwle::PwleOutput;
+#[cfg(feature = "android")]
+pub use crate::android_pwle::PwleRenderSettings;
+#[cfg(feature = "android")]
+pub use crate::android_pwle::PwleTransient;
+#[cfg(feature = "android")]
+pub use crate::android_pwle::render_pwle;
 #[cfg(feature = "android")]
 pub use crate::android_waveform::Waveform;
 #[cfg(feature = "android")]

@@ -8,8 +8,10 @@ use std::io::Cursor;
 use haptic_data::HapticData;
 use haptic_renderer::Acf;
 use haptic_renderer::HapticFileRenderer;
+use haptic_renderer::PwleRenderSettings;
 use haptic_renderer::RenderSettings;
 use haptic_renderer::WaveformRenderSettings;
+use haptic_renderer::render_pwle;
 use haptic_renderer::render_waveform;
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
@@ -99,5 +101,71 @@ pub fn render_haptic_data_to_waveform(
 #[napi]
 pub fn default_waveform_render_settings() -> Result<serde_json::Value> {
     let render_settings = serde_json::to_value(WaveformRenderSettings::default())?;
+    Ok(render_settings)
+}
+
+/// A single PWLE control point
+#[derive(Clone, Deserialize, Serialize)]
+#[typeshare]
+struct PwleControlPoint {
+    amplitude: f32,
+    frequency: f32,
+    duration_ms: u32,
+}
+
+/// A transient (emphasis) event
+#[derive(Clone, Deserialize, Serialize)]
+#[typeshare]
+struct PwleTransient {
+    amplitude: f32,
+    time_ms: u32,
+}
+
+/// The result of rendering haptic data into PWLE format
+#[derive(Clone, Deserialize, Serialize)]
+#[typeshare]
+struct PwleEnvelope {
+    control_points: Vec<PwleControlPoint>,
+    transients: Vec<PwleTransient>,
+}
+
+/// Renders haptic data into PWLE control points and transients for Android
+#[napi]
+pub fn render_haptic_data_to_pwle(
+    haptic_data: serde_json::Value,
+    render_settings: serde_json::Value,
+) -> Result<serde_json::Value> {
+    let haptic_data: HapticData = serde_json::from_value(haptic_data)?;
+    let render_settings: PwleRenderSettings = serde_json::from_value(render_settings)?;
+    let output = render_pwle(&haptic_data, render_settings)
+        .map_err(|error| Error::from_reason(format!("Error while rendering PWLE: {error}")))?;
+    let envelope = PwleEnvelope {
+        control_points: output
+            .control_points
+            .iter()
+            .zip(output.control_point_durations_ms())
+            .map(|(cp, duration_ms)| PwleControlPoint {
+                amplitude: cp.amplitude,
+                frequency: cp.frequency,
+                duration_ms: duration_ms as u32,
+            })
+            .collect(),
+        transients: output
+            .transients
+            .iter()
+            .map(|t| PwleTransient {
+                amplitude: t.amplitude,
+                time_ms: t.time_ms() as u32,
+            })
+            .collect(),
+    };
+    let envelope = serde_json::to_value(&envelope)?;
+    Ok(envelope)
+}
+
+/// Returns the default render settings for render_haptic_data_to_pwle()
+#[napi]
+pub fn default_pwle_render_settings() -> Result<serde_json::Value> {
+    let render_settings = serde_json::to_value(PwleRenderSettings::default())?;
     Ok(render_settings)
 }
